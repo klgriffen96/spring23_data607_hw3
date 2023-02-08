@@ -1,0 +1,128 @@
+---
+title: "Data 607 HW 3"
+author: "Kayleah Griffen"
+date: "2023-02-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(readr)
+library(tidyverse)
+library(RCurl)
+```
+
+## Question 1
+
+Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS".
+
+```{r data-stats}
+x <- getURL("https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv")
+y <- read.csv(text = x)
+str_subset(y$Major, "DATA") 
+str_subset(y$Major, "STATISTICS")
+```
+
+## Question 2
+
+Write code that transforms the data below:
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"
+
+Into a format like this:
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+
+```{r}
+strStart = '[1] "bell pepper" "bilberry"   "blackberry"  "blood orange"
+[5] "blueberry"  "cantaloupe"  "chili pepper" "cloudberry"
+[9] "elderberry"  "lime"     "lychee"    "mulberry"
+[13] "olive"    "salal berry"'
+
+temp <- str_replace_all(strStart, "[^[:alpha:]]+", " ")
+temp <- str_trim(temp, side="both")
+temp <- str_split_fixed(temp, "\\s", n=Inf)
+temp <- c(temp)
+print(temp) # As a vector
+# From here I looked up how to make the vector print comma separated
+# https://stackoverflow.com/questions/6347356/creating-a-comma-separated-vector
+cat("c(", paste(shQuote(temp, type="cmd"), collapse=", "), ")") # Formatted
+```
+
+## Question 3
+
+Describe, in words, what these expressions will match:
+
+1. (.)\1\1
+
+The `()` indicates a group, the `.` is a meta-character where the `.` will match any character. So `(.)` is group 1 and will match any character. The `\1` is a backreference, referencing group 1. So `\1\1` indicates the same text matched by the first group should be matched again, twice, because there are two `\1`s. The full `(.)\1\1` indicates the same character should appear three times in a row to be matched.
+
+```{r}
+ts <- c("abc", "aabc", "aaabbc", "123", "12223")
+str_subset(ts, "(.)\\1\\1")
+```
+
+2. "(.)(.)\\2\\1"
+
+The `(.)(.)` indicates two groups, both containing all characters. The `\\2` is a backreference to group 2 and `\\1` is a backreference to group 1. The full `(.)(.)\\2\\1` indicates any character (say `x`) followed by another character (say `y`), followed by `y` followed by `x` should match. If `x=y` then any 4 of the same characters in a row will match. 
+
+```{r}
+ts <- c("aaaaa", "abba", "aaba", "abbbbb", "xyyx", "111222333")
+str_subset(ts, "(.)(.)\\2\\1")
+```
+
+3. (..)\1
+
+The `(..)` indicates group 1 is any two characters, the `\1` indicates those same two characters should be repeated for a match. So for example `abab` would match.
+
+```{r}
+ts <- c("aaaaa", "abab", "aaba", "abbbbb", "12213", "111222333")
+str_subset(ts, "(..)\\1")
+```
+
+4. "(.).\\1.\\1"
+
+The `(.)` indicates group 1 is any character, the `.` is any character, the `\\1` refers to group 1. So in this case for a match the character in group 1, must be followed by a character, followed by group 1s character, followed by any character, followed by group 1s character again.
+
+```{r}
+ts <- c("aaaaa", "abaca", "aaba", "12131", "12213", "111222333")
+str_subset(ts, "(.).\\1.\\1")
+```
+
+5. "(.)(.)(.).*\\3\\2\\1"
+
+The three `(.)` indicates three groups of any character. The `.` indicates any character. The `*` is another meta character letting a pattern be optional or repeat any number of times. So the `.*` indicates a character repeated any number of times, including zero times is an option. The `\\3\\2\\1` means that group 3, then group 2, then group 1 should be repeated to complete the match. So to get a match from `(.)(.)(.).*\\3\\2\\1` the following must be true: character 1, then character 2, then character 3, then any character or no character, then character 3, then character 2, then character 1. 
+
+```{r}
+ts <- c("abczzzzzcba", "aaaaaa", "abcdefg", "123321", "12213", "111222333")
+str_subset(ts, "(.)(.)(.).*\\3\\2\\1")
+```
+
+## Question 4
+
+Construct regular expressions to match words that:
+
+1. Start and end with the same character.
+
+```{r}
+ts <- c("Hannah", "hello", "kayak", "aa", "121", "111222333")
+str_subset(ts, regex("^(.).*\\1$", ignore_case = T))
+```
+
+2. Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+
+```{r}
+ts <- c("Church", "abab", "abc", "123321", "1212", "111222333")
+str_subset(ts, regex("([A-Za-z][A-Za-z]).*\\1", ignore_case = T))
+```
+
+3. Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+```{r}
+ts <- c("Eleven", "aaaaaa", "abcdefg", "12121", "12213", "111222333")
+str_subset(ts, regex("([A-Za-z]).*\\1.*\\1", ignore_case = T))
+```
