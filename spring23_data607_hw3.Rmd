@@ -43,14 +43,21 @@ strStart = '[1] "bell pepper" "bilberry"   "blackberry"  "blood orange"
 [9] "elderberry"  "lime"     "lychee"    "mulberry"
 [13] "olive"    "salal berry"'
 
-temp <- str_replace_all(strStart, "[^[:alpha:]]+", " ")
+temp <- str_replace_all(strStart, "[:digit:]", " ")
+temp <- str_replace_all(temp, "\\[.*\\]", " ")
+temp <- str_replace_all(temp, "\\n", " ")
 temp <- str_trim(temp, side="both")
-temp <- str_split_fixed(temp, "\\s", n=Inf)
-temp <- c(temp)
-print(temp) # As a vector
+temp <- str_split_fixed(temp, '\\"' , n=Inf)
+s <- c()
+for (i in 1:length(temp)){
+  if (str_detect(temp[i], "[A-Za-z]")){
+    s <- append(s, temp[i])
+  }
+}
+print(s) # As a vector
 # From here I looked up how to make the vector print comma separated
 # https://stackoverflow.com/questions/6347356/creating-a-comma-separated-vector
-cat("c(", paste(shQuote(temp, type="cmd"), collapse=", "), ")") # Formatted
+cat("c(", paste(shQuote(s, type="cmd"), collapse=", "), ")") # Formatted
 ```
 
 ## Question 3
